@@ -1403,10 +1403,11 @@ lib.composeManyExtensions [
               pkgs.rustPlatform.fetchCargoTarball
                 {
                   inherit (old) src;
-                  sourceRoot = "${old.pname}-${old.version}";
+                  sourceRoot = "${old.pname}-${old.version}/native/libcst";
                   name = "${old.pname}-${old.version}";
                   sha256 = getCargoHash old.version;
                 };
+                cargoRoot = "native/libcst";
           }
         );
 

@@ -1384,6 +1384,32 @@ lib.composeManyExtensions [
         '';
       });
 
+      libcst =
+        let
+          getCargoHash = version: {
+            "1.4.0" = lib.fakeHash;
+          }.${version} or (
+            lib.warn "Unknown libcst version: '${version}'. Please update getCargoHash." lib.fakeHash
+          );
+        in
+        prev.libcst.overridePythonAttrs (
+          old: {
+            buildInputs = old.buildInputs or [ ] ++ [ pkgs.libffi ];
+            nativeBuildInputs = with pkgs;
+              old.nativeBuildInputs or [ ]
+                ++ lib.optionals (lib.versionAtLeast old.version "1") [ rustc cargo pkgs.rustPlatform.cargoSetupHook final.setuptools-rust ];
+          } // lib.optionalAttrs (lib.versionAtLeast old.version "1") {
+            cargoDeps =
+              pkgs.rustPlatform.fetchCargoTarball
+                {
+                  inherit (old) src;
+                  sourceRoot = "${old.pname}-${old.version}";
+                  name = "${old.pname}-${old.version}";
+                  sha256 = getCargoHash old.version;
+                };
+          }
+        );
+
       libvirt-python = prev.libvirt-python.overridePythonAttrs (old: {
         nativeBuildInputs = old.nativeBuildInputs or [ ] ++ [ pkg-config ];
         propagatedBuildInputs = [ pkgs.libvirt ];
